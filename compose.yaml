@@ -1,0 +1,47 @@
+services:
+  apache:
+    container_name: apache
+    build:
+      context: apache
+    volumes:
+      - ${WWW_DIRECTORY}:${WWW_DIRECTORY}:ro
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME}
+      WWW_DIRECTORY: ${WWW_DIRECTORY}
+      TZ: ${TIMEZONE}
+    ports:
+      - "80:80"
+    depends_on:
+      - php
+    restart: unless-stopped
+
+  php:
+    container_name: php
+    build:
+      context: php
+    volumes:
+      - ${WWW_DIRECTORY}:${WWW_DIRECTORY}
+    environment:
+      TZ: ${TIMEZONE}
+    depends_on:
+      - mariadb
+    restart: unless-stopped
+
+  mariadb:
+    container_name: mariadb
+    build:
+      context: mariadb
+    volumes:
+      - database:/var/lib/mysql
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      TZ: ${TIMEZONE}
+    restart: unless-stopped
+
+volumes:
+  database:
+
+
