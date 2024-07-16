@@ -44,3 +44,5 @@ RUN TEMP_PACKAGES=" \
 
 RUN	cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/conf.d/php.ini" \
 	&& sed -i 's/^\(;*disable_functions\s*=\s*\).*$/disable_functions=exec,system,passthru,popen,proc_open,shell_exec/' "$PHP_INI_DIR/conf.d/php.ini"
+
+COPY ips_task.sh /usr/local/bin/

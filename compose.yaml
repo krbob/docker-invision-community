@@ -22,6 +22,7 @@ services:
     volumes:
       - ${WWW_DIRECTORY}:${WWW_DIRECTORY}
     environment:
+      WWW_DIRECTORY: ${WWW_DIRECTORY}
       TZ: ${TIMEZONE}
     depends_on:
       - mariadb
@@ -39,6 +40,18 @@ services:
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
       TZ: ${TIMEZONE}
+    restart: unless-stopped
+
+  cron:
+    container_name: cron
+    build:
+      context: cron
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      TZ: ${TIMEZONE}
+    depends_on:
+      - php
     restart: unless-stopped
 
 volumes:
