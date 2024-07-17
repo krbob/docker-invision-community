@@ -1,5 +1,6 @@
 DOMAIN_NAME=example.com
 WWW_DIRECTORY=/var/www/ips
+LOGS_DIRECTORY=/var/log/ips
 MARIADB_ROOT_PASSWORD=rootpassword
 MARIADB_DATABASE=invision_db
 MARIADB_USER=invision_user

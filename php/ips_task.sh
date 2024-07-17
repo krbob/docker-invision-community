@@ -1,49 +1,60 @@
 #!/bin/bash
 
-TASK_KEY=$(
-    cd ${WWW_DIRECTORY}
-    php <<-'PHP_CODE' 2>/dev/null || exit 1
-<?php
-require 'conf_global.php';
+CONFIG_FILE="$WWW_DIRECTORY/conf_global.php"
+TASK_FILE="$WWW_DIRECTORY/applications/core/interface/task/task.php"
+SQL_QUERY="SELECT conf_value FROM core_sys_conf_settings WHERE conf_key = 'task_cron_key'"
 
-if (!isset($INFO['sql_host'], $INFO['sql_user'], $INFO['sql_pass'], $INFO['sql_database'])) {
-    fwrite(STDERR, "Missing configuration variables\n");
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Configuration file $CONFIG_FILE does not exist." >&2
+    exit 1
+fi
+
+eval $(php -r "
+include '$CONFIG_FILE';
+echo 'DB_HOST=' . \$INFO['sql_host'] . ' ';
+echo 'DB_NAME=' . \$INFO['sql_database'] . ' ';
+echo 'DB_USER=' . \$INFO['sql_user'] . ' ';
+echo 'DB_PASS=' . \$INFO['sql_pass'] . ' ';
+echo 'DB_PORT=' . \$INFO['sql_port'] . ' ';
+" 2>/dev/null)
+
+if [ -z "$DB_HOST" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ]; then
+    echo "Failed to retrieve configuration data from file $CONFIG_FILE." >&2
+    exit 1
+fi
+
+TASK_KEY=$(php -r "
+try {
+    \$mysqli = new mysqli('$DB_HOST', '$DB_USER', '$DB_PASS', '$DB_NAME', $DB_PORT);
+    if (\$mysqli->connect_error) {
+        throw new Exception('Database connection error: ' . \$mysqli->connect_error);
+    }
+    \$result = \$mysqli->query(\"$SQL_QUERY\");
+    if (!\$result) {
+        throw new Exception('Database query error: ' . \$mysqli->error);
+    }
+    \$row = \$result->fetch_assoc();
+    if (!\$row) {
+        throw new Exception('No result found for task_cron_key in the database.');
+    }
+    echo \$row['conf_value'];
+    \$mysqli->close();
+} catch (Exception \$e) {
+    echo 'ERROR: ' . \$e->getMessage();
     exit(1);
 }
+" 2>&1)
 
-$host = $INFO['sql_host'];
-$user = $INFO['sql_user'];
-$pass = $INFO['sql_pass'];
-$db   = $INFO['sql_database'];
-$port = isset($INFO['sql_port']) ? intval($INFO['sql_port']) : 3306;
+if [[ "$TASK_KEY" == ERROR:* ]]; then
+    echo "${TASK_KEY#ERROR: }" >&2
+    exit 1
+elif [ -z "$TASK_KEY" ]; then
+    echo "Failed to retrieve task_cron_key from the database." >&2
+    exit 1
+fi
 
-$conn = new mysqli($host, $user, $pass, $db, $port);
-
-if ($conn->connect_error) {
-    fwrite(STDERR, "Database connection error: " . $conn->connect_error . "\n");
-    exit(1);
-}
-
-$sql = "SELECT conf_value FROM core_sys_conf_settings WHERE conf_key = 'task_cron_key'";
-$result = $conn->query($sql);
-
-if (!$result) {
-    fwrite(STDERR, "Query error: " . $conn->error . "\n");
-    $conn->close();
-    exit(1);
-}
-
-$row = $result->fetch_assoc();
-$taskKey = $row['conf_value'] ?? '';
-
-echo $taskKey;
-$conn->close();
-PHP_CODE
-)
-
-if [ -n "$TASK_KEY" ]; then
-    php -d memory_limit=-1 -d max_execution_time=0 ${WWW_DIRECTORY}/applications/core/interface/task/task.php "$TASK_KEY"
-else
-    echo "Failed to retrieve the task key" >&2
+php -d memory_limit=-1 -d max_execution_time=0 ${TASK_FILE} "$TASK_KEY" 2>&1
+if [ $? -ne 0 ]; then
+    echo "Failed to execute PHP task." >&2
     exit 1
 fi
