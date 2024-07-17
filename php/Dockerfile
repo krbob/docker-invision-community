@@ -43,6 +43,7 @@ RUN TEMP_PACKAGES=" \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN	cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/conf.d/php.ini" \
-	&& sed -i 's/^\(;*disable_functions\s*=\s*\).*$/disable_functions=exec,system,passthru,popen,proc_open,shell_exec/' "$PHP_INI_DIR/conf.d/php.ini"
+	&& sed -i 's/^\(;*disable_functions\s*=\s*\).*$/disable_functions=exec,system,passthru,popen,proc_open,shell_exec/' "$PHP_INI_DIR/conf.d/php.ini" \
+	&& sed -i 's|^\(error_log\s*=\s*\).*|\1log/error.log|' "$PHP_INI_DIR/../php-fpm.d/docker.conf"
 
 COPY ips_task.sh /usr/local/bin/

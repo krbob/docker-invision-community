@@ -1,1 +1,2 @@
-* * * * * docker exec php /usr/local/bin/ips_task.sh >> /var/log/cron.log 2>&1
+* * * * * docker exec php /usr/local/bin/ips_task.sh 2>&1 | awk '{ print strftime("%Y-%m-%d %H:%M:%S"), "- [ips task]", $0; }' >> /var/log/cron.log
+0 3 * * * docker container start -a logrotate 2>&1 | awk '{ print strftime("%Y-%m-%d %H:%M:%S"), "- [logrotate]", $0; }' >> /var/log/cron.log

@@ -5,6 +5,7 @@ services:
       context: apache
     volumes:
       - ${WWW_DIRECTORY}:${WWW_DIRECTORY}:ro
+      - ${LOGS_DIRECTORY}/apache:/usr/local/apache2/logs
     environment:
       DOMAIN_NAME: ${DOMAIN_NAME}
       WWW_DIRECTORY: ${WWW_DIRECTORY}
@@ -21,6 +22,7 @@ services:
       context: php
     volumes:
       - ${WWW_DIRECTORY}:${WWW_DIRECTORY}
+      - ${LOGS_DIRECTORY}/php:/usr/local/var/log
     environment:
       WWW_DIRECTORY: ${WWW_DIRECTORY}
       TZ: ${TIMEZONE}
@@ -34,6 +36,7 @@ services:
       context: mariadb
     volumes:
       - database:/var/lib/mysql
+      - ${LOGS_DIRECTORY}/mariadb:/var/log/mysql
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       MARIADB_DATABASE: ${MARIADB_DATABASE}
@@ -48,11 +51,19 @@ services:
       context: cron
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ${LOGS_DIRECTORY}/cron:/var/log
     environment:
       TZ: ${TIMEZONE}
     depends_on:
       - php
     restart: unless-stopped
+
+  logrotate:
+    container_name: logrotate
+    build:
+      context: logrotate
+    volumes:
+      - ${LOGS_DIRECTORY}:/var/log
 
 volumes:
   database:
