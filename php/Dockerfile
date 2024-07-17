@@ -1,5 +1,7 @@
 FROM php:8.1-fpm-bookworm
 
+ENV WWW_DIRECTORY /var/www/ips
+
 RUN TEMP_PACKAGES=" \
 	# GD:
 	libfreetype6-dev \
