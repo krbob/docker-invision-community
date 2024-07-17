@@ -4,7 +4,10 @@ dockerfiles=$(find . -name Dockerfile)
 
 for dockerfile in $dockerfiles; do
     for image in $(grep FROM $dockerfile | awk '{print $2}'); do
-        docker pull $image
+        if ! docker pull $image; then
+            echo "Failed to pull image $image. Exiting..."
+            exit 1
+        fi
     done
 done
 
