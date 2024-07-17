@@ -1,5 +1,7 @@
 FROM httpd:2.4-bookworm
 
+ENV WWW_DIRECTORY /var/www/ips
+
 COPY httpd-vhosts.conf ${HTTPD_PREFIX}/conf/extra/
 
 RUN sed -i \

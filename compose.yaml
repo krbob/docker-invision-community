@@ -4,11 +4,10 @@ services:
     build:
       context: apache
     volumes:
-      - ${WWW_DIRECTORY}:${WWW_DIRECTORY}:ro
+      - ${WWW_DIRECTORY}:/var/www/ips:ro
       - ${LOGS_DIRECTORY}/apache:/usr/local/apache2/logs
     environment:
       DOMAIN_NAME: ${DOMAIN_NAME}
-      WWW_DIRECTORY: ${WWW_DIRECTORY}
       TZ: ${TIMEZONE}
     ports:
       - "80:80"
@@ -21,10 +20,9 @@ services:
     build:
       context: php
     volumes:
-      - ${WWW_DIRECTORY}:${WWW_DIRECTORY}
+      - ${WWW_DIRECTORY}:/var/www/ips
       - ${LOGS_DIRECTORY}/php:/usr/local/var/log
     environment:
-      WWW_DIRECTORY: ${WWW_DIRECTORY}
       TZ: ${TIMEZONE}
     depends_on:
       - mariadb
