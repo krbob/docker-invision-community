@@ -1,6 +1,6 @@
 FROM alpine:3.20.1
 
-RUN apk add --no-cache logrotate
+RUN apk add --no-cache logrotate tzdata
 
 COPY logrotate.conf /etc/
 
