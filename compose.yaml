@@ -6,11 +6,14 @@ services:
     volumes:
       - ${WWW_DIRECTORY}:/var/www/ips:ro
       - ${LOGS_DIRECTORY}/apache:/usr/local/apache2/logs
+      - ${CERTBOT_WWW_DIRECTORY}:/var/www/certbot:ro
+      - certificates:/etc/letsencrypt:ro
     environment:
       DOMAIN_NAME: ${DOMAIN_NAME}
       TZ: ${TIMEZONE}
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       - php
     restart: unless-stopped
@@ -53,6 +56,7 @@ services:
     environment:
       TZ: ${TIMEZONE}
     depends_on:
+      - apache
       - php
     restart: unless-stopped
 
@@ -65,7 +69,32 @@ services:
     environment:
       TZ: ${TIMEZONE}
 
+  certbot-new:
+    container_name: certbot-new
+    build:
+      context: certbot-new
+    volumes:
+      - ${CERTBOT_WWW_DIRECTORY}:/var/www/certbot
+      - certificates:/etc/letsencrypt
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME}
+      TZ: ${TIMEZONE}
+    depends_on:
+      - apache
+
+  certbot-renew:
+    container_name: certbot-renew
+    build:
+      context: certbot-renew
+    volumes:
+      - ${CERTBOT_WWW_DIRECTORY}:/var/www/certbot
+      - certificates:/etc/letsencrypt
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME}
+      TZ: ${TIMEZONE}
+    depends_on:
+      - apache
+
 volumes:
   database:
-
-
+  certificates:
