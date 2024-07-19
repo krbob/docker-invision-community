@@ -17,4 +17,4 @@ RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/conf.d/php.ini" \
 	&& sed -i 's/^upload_max_filesize = .*/upload_max_filesize = 8M/' "$PHP_INI_DIR/conf.d/php.ini" \
 	&& sed -i 's|^\(error_log\s*=\s*\).*|\1log/error.log|' "$PHP_INI_DIR/../php-fpm.d/docker.conf"
 
-COPY ips_task.sh /usr/local/bin/
+COPY ips-task.sh /usr/local/bin/

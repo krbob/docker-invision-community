@@ -2,7 +2,7 @@ FROM alpine:3.20.1
 
 RUN apk add --no-cache docker-cli tzdata
 
-COPY run_with_logging.sh /usr/local/bin/
+COPY run-with-logging.sh /usr/local/bin/
 
 COPY crontab /etc/crontabs/root
 
