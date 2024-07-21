@@ -15,6 +15,7 @@ RUN install-php-extensions gd zip exif gmp mysqli
 RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/conf.d/php.ini" \
 	&& sed -i 's/^\(;*disable_functions\s*=\s*\).*$/disable_functions=exec,system,passthru,popen,proc_open,shell_exec/' "$PHP_INI_DIR/conf.d/php.ini" \
 	&& sed -i 's/^upload_max_filesize = .*/upload_max_filesize = 8M/' "$PHP_INI_DIR/conf.d/php.ini" \
-	&& sed -i 's|^\(error_log\s*=\s*\).*|\1log/error.log|' "$PHP_INI_DIR/../php-fpm.d/docker.conf"
+	&& sed -i 's|^\(error_log\s*=\s*\).*|\1log/error.log|' "$PHP_INI_DIR/../php-fpm.d/docker.conf" \
+	&& sed -i 's/^pm.max_children = .*/pm.max_children = 10/' "$PHP_INI_DIR/../php-fpm.d/www.conf"
 
 COPY ips-task.sh /usr/local/bin/
