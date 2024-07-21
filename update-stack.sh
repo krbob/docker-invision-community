@@ -11,6 +11,9 @@ for dockerfile in $dockerfiles; do
     done
 done
 
-docker compose up --build -d
+if ! docker compose up --build -d --remove-orphans; then
+    echo "docker compose up failed. Exiting..."
+    exit 1
+fi
 
 docker image prune -af
