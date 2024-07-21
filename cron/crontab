@@ -1,4 +1,4 @@
-* * * * * /usr/local/bin/run-with-logging.sh "ips task" "docker exec php /usr/local/bin/ips-task.sh"
-0 3 * * * /usr/local/bin/run-with-logging.sh "logrotate" "docker container start -a logrotate"
-0 4 * * 0 /usr/local/bin/run-with-logging.sh "certbot" "docker exec certbot /usr/local/bin/certbot.sh renew"
-5 4 * * 0 /usr/local/bin/run-with-logging.sh "apache" "docker exec apache apachectl -k graceful"
+* * * * * run-with-logging.sh "ips task" "docker exec php ips-task.sh"
+0 3 * * * run-with-logging.sh "logrotate" "docker container start -a logrotate"
+0 4 * * 0 run-with-logging.sh "certbot" "docker exec certbot certbot.sh renew"
+5 4 * * 0 run-with-logging.sh "apache" "docker exec apache apachectl -k graceful"
