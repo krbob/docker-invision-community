@@ -69,10 +69,10 @@ services:
     environment:
       TZ: ${TIMEZONE}
 
-  certbot-new:
-    container_name: certbot-new
+  certbot:
+    container_name: certbot
     build:
-      context: certbot-new
+      context: certbot
     volumes:
       - ${CERTBOT_WWW_DIRECTORY}:/var/www/certbot
       - certificates:/etc/letsencrypt
@@ -81,19 +81,7 @@ services:
       TZ: ${TIMEZONE}
     depends_on:
       - apache
-
-  certbot-renew:
-    container_name: certbot-renew
-    build:
-      context: certbot-renew
-    volumes:
-      - ${CERTBOT_WWW_DIRECTORY}:/var/www/certbot
-      - certificates:/etc/letsencrypt
-    environment:
-      DOMAIN_NAME: ${DOMAIN_NAME}
-      TZ: ${TIMEZONE}
-    depends_on:
-      - apache
+    restart: unless-stopped
 
 volumes:
   database:
