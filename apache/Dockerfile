@@ -1,10 +1,10 @@
 FROM httpd:2.4-bookworm
 
-ENV WWW_DIRECTORY /var/www/ips
+ENV WWW_DIRECTORY=/var/www/ips
 
-ENV CERTBOT_WWW_DIRECTORY /var/www/certbot
+ENV CERTBOT_WWW_DIRECTORY=/var/www/certbot
 
-ENV CERTIFICATES_DIRECTORY /etc/letsencrypt
+ENV CERTIFICATES_DIRECTORY=/etc/letsencrypt
 
 COPY httpd-vhosts.conf ${HTTPD_PREFIX}/conf/extra/
 
