@@ -29,6 +29,7 @@ services:
       TZ: ${TIMEZONE}
     depends_on:
       - mariadb
+      - redis
     restart: unless-stopped
 
   mariadb:
@@ -43,6 +44,16 @@ services:
       MARIADB_DATABASE: ${MARIADB_DATABASE}
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      TZ: ${TIMEZONE}
+    restart: unless-stopped
+
+  redis:
+    container_name: redis
+    build:
+      context: redis
+    volumes:
+      - ${LOGS_DIRECTORY}/redis:/var/log/redis
+    environment:
       TZ: ${TIMEZONE}
     restart: unless-stopped
 
