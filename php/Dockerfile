@@ -1,6 +1,6 @@
 FROM php:8.1-fpm-bookworm
 
-ENV WWW_DIRECTORY /var/www/ips
+ENV WWW_DIRECTORY=/var/www/ips
 
 RUN apt-get update && apt-get install -y locales
 
