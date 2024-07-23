@@ -8,7 +8,9 @@ COPY locale.gen /etc/
 
 RUN dpkg-reconfigure --frontend=noninteractive locales
 
-ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/install-php-extensions
 
 RUN install-php-extensions gd zip exif gmp mysqli redis
 
