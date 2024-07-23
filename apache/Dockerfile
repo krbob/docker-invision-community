@@ -8,11 +8,11 @@ ENV CERTIFICATES_DIRECTORY=/etc/letsencrypt
 
 COPY httpd-vhosts.conf ${HTTPD_PREFIX}/conf/extra/
 
-COPY generate-self-signed-certs.sh /usr/local/bin/
+COPY generate-snakeoil-cert.sh /usr/local/bin/
 
-RUN chmod +x /usr/local/bin/generate-self-signed-certs.sh
+RUN chmod +x /usr/local/bin/generate-snakeoil-cert.sh
 
-RUN /usr/local/bin/generate-self-signed-certs.sh
+RUN /usr/local/bin/generate-snakeoil-cert.sh
 
 RUN sed -i \
 	-e 's/^#\(Include .*httpd-vhosts.conf\)/\1/' \
