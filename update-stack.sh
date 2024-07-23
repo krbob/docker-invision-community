@@ -11,7 +11,7 @@ for dockerfile in $dockerfiles; do
     done
 done
 
-if ! docker compose up --build -d --remove-orphans; then
+if ! docker-compose up --build -d --remove-orphans; then
     echo "docker compose up failed. Exiting..."
     exit 1
 fi
