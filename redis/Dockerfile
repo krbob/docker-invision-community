@@ -1,9 +1,9 @@
 FROM redis:6.2-bookworm
 
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ips-entrypoint.sh /usr/local/bin/
 
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/ips-entrypoint.sh
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["ips-entrypoint.sh"]
 
-CMD ["redis-server", "--maxmemory 128mb", "--maxmemory-policy allkeys-lru"]
+CMD ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru", "--logfile", "/var/log/redis/redis.log"]
