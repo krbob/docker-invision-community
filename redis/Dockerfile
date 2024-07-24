@@ -6,4 +6,4 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-CMD ["redis-server", "--maxmemory 256mb", "--maxmemory-policy allkeys-lru"]
+CMD ["redis-server", "--maxmemory 128mb", "--maxmemory-policy allkeys-lru"]
