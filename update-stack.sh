@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if docker compose version >/dev/null 2>&1; then
+    DOCKER_COMPOSE="docker compose"
+else
+    DOCKER_COMPOSE="docker-compose"
+fi
+
 dockerfiles=$(find . -name Dockerfile)
 
 for dockerfile in $dockerfiles; do
@@ -11,8 +17,8 @@ for dockerfile in $dockerfiles; do
     done
 done
 
-if ! docker-compose up --build -d --remove-orphans; then
-    echo "docker compose up failed. Exiting..."
+if ! $DOCKER_COMPOSE up --build -d --remove-orphans; then
+    echo "$DOCKER_COMPOSE up failed. Exiting..."
     exit 1
 fi
 
