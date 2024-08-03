@@ -4,10 +4,11 @@ services:
     build:
       context: apache
     volumes:
-      - ${WWW_DIRECTORY}:/var/www/ips:ro
+      - ${WWW_DIRECTORY}:/var/www/ips
       - ${LOGS_DIRECTORY}/apache:/usr/local/apache2/logs
       - ${CERTBOT_WWW_DIRECTORY}:/var/www/certbot:ro
       - certificates:/etc/letsencrypt:ro
+      - ${BACKUP_DIRECTORY}/www:/var/backup
     environment:
       DOMAIN_NAME: ${DOMAIN_NAME}
       TZ: ${TIMEZONE}
@@ -39,6 +40,7 @@ services:
     volumes:
       - database:/var/lib/mysql
       - ${LOGS_DIRECTORY}/mariadb:/var/log/mysql
+      - ${BACKUP_DIRECTORY}/db:/var/backup
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       MARIADB_DATABASE: ${MARIADB_DATABASE}
@@ -69,6 +71,8 @@ services:
     depends_on:
       - apache
       - php
+      - mariadb
+      - restic
     restart: unless-stopped
 
   logrotate:
@@ -92,6 +96,20 @@ services:
       TZ: ${TIMEZONE}
     depends_on:
       - apache
+    restart: unless-stopped
+
+  restic:
+    container_name: restic
+    build:
+      context: restic
+    volumes:
+      - ${BACKUP_DIRECTORY}:/var/backup
+    environment:
+      RESTIC_REPOSITORY: ${RESTIC_REPOSITORY}
+      RESTIC_PASSWORD: ${RESTIC_PASSWORD}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      TZ: ${TIMEZONE}
     restart: unless-stopped
 
 volumes:

@@ -2,3 +2,6 @@
 0 3 * * * run-with-logging.sh "logrotate" "docker container start -a logrotate"
 0 4 * * 0 run-with-logging.sh "certbot" "docker exec certbot certbot.sh renew"
 5 4 * * 0 run-with-logging.sh "apache" "docker exec apache apachectl -k graceful"
+0 5 * * * run-with-logging.sh "mariadb" "docker exec mariadb create-backup.sh"
+5 5 * * * run-with-logging.sh "apache" "docker exec apache create-backup.sh"
+10 5 * * * run-with-logging.sh "restic" "docker exec restic publish-backups.sh"
