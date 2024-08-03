@@ -1,0 +1,202 @@
+// prometheus
+
+prometheus.remote_write "grafanacloud" {
+  endpoint {
+    url = env("PROMETHEUS_ENDPOINT")
+
+    basic_auth {
+      username = env("PROMETHEUS_USER")
+      password = env("PROMETHEUS_PASSWORD")
+    }
+  }
+}
+
+// loki
+
+loki.write "grafanacloud" {
+  endpoint {
+    url = env("LOKI_ENDPOINT")
+
+    basic_auth {
+      username = env("LOKI_USER")
+      password = env("LOKI_PASSWORD")
+    }
+  }
+}
+
+// docker integration
+
+prometheus.exporter.cadvisor "integrations_cadvisor" {
+    docker_only = true
+}
+discovery.relabel "integrations_cadvisor" {
+    targets = prometheus.exporter.cadvisor.integrations_cadvisor.targets
+
+    rule {
+        target_label = "job"
+        replacement  = "integrations/docker"
+    }
+
+    rule {
+        target_label = "instance"
+        replacement  = constants.hostname
+    }
+}
+
+prometheus.relabel "integrations_cadvisor" {
+	forward_to = [prometheus.remote_write.grafanacloud.receiver]
+
+	rule {
+		source_labels = ["__name__"]
+		regex         = "up|container_cpu_usage_seconds_total|container_fs_inodes_free|container_fs_inodes_total|container_fs_limit_bytes|container_fs_usage_bytes|container_last_seen|container_memory_usage_bytes|container_network_receive_bytes_total|container_network_tcp_usage_total|container_network_transmit_bytes_total|container_spec_memory_reservation_limit_bytes|machine_memory_bytes|machine_scrape_error"
+		action        = "keep"
+	}
+}
+
+prometheus.scrape "integrations_cadvisor" {
+    targets    = discovery.relabel.integrations_cadvisor.output
+    forward_to = [prometheus.relabel.integrations_cadvisor.receiver]
+}
+
+// apache integration
+
+prometheus.exporter.self "integrations_apache_http_histogram" { }
+
+discovery.relabel "integrations_apache_http_histogram" {
+    targets = prometheus.exporter.self.integrations_apache_http_histogram.targets
+
+    rule {
+        source_labels = ["exported_job"]
+        replacement  = "integrations/apache_http"
+        action       = "keep"
+    }
+
+    rule {
+        source_labels = ["exported_instance"]
+        target_label = "instance"                
+    }
+
+    rule {
+        source_labels = ["exported_job"]
+        replacement  = "job"
+    }
+}
+
+prometheus.scrape "integrations_apache_http_histogram" {
+    targets    = discovery.relabel.integrations_apache_http_histogram.output
+    forward_to = [prometheus.remote_write.grafanacloud.receiver]
+    job_name   = "integrations/apache_http"
+}  
+
+prometheus.exporter.apache "integrations_apache_http" {
+    scrape_uri = "https://localhost/server-status?auto"
+}
+
+discovery.relabel "integrations_apache_http" {
+    targets = prometheus.exporter.apache.integrations_apache_http.targets
+
+    rule {
+        target_label = "instance"
+        replacement  = constants.hostname
+    }
+
+    rule {
+        target_label = "job"
+        replacement  = "integrations/apache_http"
+    }
+}
+
+prometheus.scrape "integrations_apache_http" {
+    targets    = discovery.relabel.integrations_apache_http.output
+    forward_to = [prometheus.relabel.integrations_apache_http.receiver]
+    job_name   = "integrations/apache_http"
+}
+
+prometheus.relabel "integrations_apache_http" {
+    forward_to = [prometheus.remote_write.grafanacloud.receiver]
+
+    rule {
+        source_labels = ["__name__"]
+        regex         = "up|apache_accesses_total|apache_cpuload|apache_duration_ms_total|apache_info|apache_response_http_codes_bucket|apache_response_http_codes_count|apache_scoreboard|apache_sent_kilobytes_total|apache_up|apache_uptime_seconds_total|apache_workers"
+        action        = "keep"
+    }
+}
+
+local.file_match "logs_integrations_integrations_apache_error" {
+    path_targets = [{
+        __address__ = "localhost",
+        __path__    = "/var/log/apache/error.log",
+        instance    = constants.hostname,
+        job         = "integrations/apache_http",
+    }]
+}
+
+loki.process "logs_integrations_integrations_apache_error" {
+    forward_to = []
+
+    stage.regex {
+        expression = "^\\[[^ ]* (?P<timestamp>[^\\]]*)\\] \\[(?:(?P<module>[^:\\]]+):)?(?P<level>[^\\]]+)\\](?: \\[pid (?P<pid>[^\\]]*)\\])?(?: \\[client (?P<client>[^\\]]*)\\])? (?P<message>.*)$"
+    }
+
+    stage.labels {
+        values = {
+            level  = null,
+            module = null,
+        }
+    }
+
+    stage.static_labels {
+        values = {
+            logtype = "error",
+        }
+    }
+}
+
+loki.source.file "logs_integrations_integrations_apache_error" {
+    targets    = local.file_match.logs_integrations_integrations_apache_error.targets
+    forward_to = [loki.write.grafanacloud.receiver]
+}
+
+local.file_match "logs_integrations_integrations_apache_access" {
+    path_targets = [{
+        __address__ = "localhost",
+        __path__    = "/var/log/apache/access.log",
+        instance    = constants.hostname,
+        job         = "integrations/apache_http",
+    }]
+}
+
+loki.process "logs_integrations_integrations_apache_access" {
+    forward_to = [loki.write.grafanacloud.receiver]
+
+    stage.regex {
+        expression = "^(?P<ip>[^ ]*) [^ ]* (?P<user>[^ ]*) \\[(?P<timestamp>[^\\]]*)\\] \"(?P<method>\\S+)(?: +(?P<path>[^ ]*) +\\S*)?\" (?P<code>[^ ]*) (?P<size>[^ ]*)(?: \"(?P<referer>[^\\\"]*)\" \"(?P<agent>.*)\")?$"
+    }
+
+    stage.metrics { 
+        metric.histogram {
+            name    = "response_http_codes"
+            description = "Apache responses by HTTP codes"
+            source    = "code"
+            prefix    = "apache_"
+            buckets   = [199,299,399,499,599]
+        }
+    }
+
+    stage.labels {
+        values = {
+            method = null,
+        }
+    }
+
+    stage.static_labels {
+        values = {
+            logtype = "access",
+        }
+    }
+}
+
+loki.source.file "logs_integrations_integrations_apache_access" {
+    targets    = local.file_match.logs_integrations_integrations_apache_access.targets
+    forward_to = [loki.process.logs_integrations_integrations_apache_access.receiver]
+}

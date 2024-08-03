@@ -94,6 +94,32 @@ services:
       - apache
     restart: unless-stopped
 
+  alloy:
+    container_name: alloy
+    build:
+      context: alloy
+    privileged: true
+    volumes:
+      - monitoring:/var/lib/alloy/data
+      - ${LOGS_DIRECTORY}:/var/log
+      - /:/host:ro
+      - /sys:/sys:ro
+      - /var/run:/var/run:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      PROMETHEUS_ENDPOINT: ${PROMETHEUS_ENDPOINT}
+      PROMETHEUS_USER: ${PROMETHEUS_USER}
+      PROMETHEUS_PASSWORD: ${PROMETHEUS_PASSWORD}
+      LOKI_ENDPOINT: ${LOKI_ENDPOINT}
+      LOKI_USER: ${LOKI_USER}
+      LOKI_PASSWORD: ${LOKI_PASSWORD}
+      TZ: ${TIMEZONE}
+    ports:
+      - "12345:12345"
+    restart: unless-stopped
+
 volumes:
   database:
   certificates:
+  monitoring:
