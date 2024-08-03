@@ -23,3 +23,5 @@ RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/conf.d/php.ini" \
 	&& sed -i 's/^pm.max_children = .*/pm.max_children = 10/' "$PHP_INI_DIR/../php-fpm.d/www.conf"
 
 COPY ips-task.sh /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/ips-task.sh
