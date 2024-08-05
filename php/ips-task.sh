@@ -11,12 +11,18 @@ fi
 
 eval $(php -r "
 include '$CONFIG_FILE';
-echo 'DB_HOST=' . \$INFO['sql_host'] . ' ';
-echo 'DB_NAME=' . \$INFO['sql_database'] . ' ';
-echo 'DB_USER=' . \$INFO['sql_user'] . ' ';
-echo 'DB_PASS=' . \$INFO['sql_pass'] . ' ';
-echo 'DB_PORT=' . \$INFO['sql_port'] . ' ';
+printf('DB_HOST=%s ', escapeshellarg(\$INFO['sql_host']));
+printf('DB_NAME=%s ', escapeshellarg(\$INFO['sql_database']));
+printf('DB_USER=%s ', escapeshellarg(\$INFO['sql_user']));
+printf('DB_PASS=%s ', escapeshellarg(\$INFO['sql_pass']));
+printf('DB_PORT=%s ', escapeshellarg(\$INFO['sql_port']));
 " 2>/dev/null)
+
+DB_HOST=$(echo $DB_HOST | sed "s/^'//;s/'$//")
+DB_NAME=$(echo $DB_NAME | sed "s/^'//;s/'$//")
+DB_USER=$(echo $DB_USER | sed "s/^'//;s/'$//")
+DB_PASS=$(echo $DB_PASS | sed "s/^'//;s/'$//")
+DB_PORT=$(echo $DB_PORT | sed "s/^'//;s/'$//")
 
 if [ -z "$DB_HOST" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ]; then
     echo "Failed to retrieve configuration data from file $CONFIG_FILE." >&2
