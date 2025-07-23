@@ -1,4 +1,4 @@
-FROM certbot/certbot:v2.11.0
+FROM certbot/certbot:v3.3.0
 
 COPY certbot.sh /usr/local/bin/certbot.sh
 
