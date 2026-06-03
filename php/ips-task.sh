@@ -17,11 +17,11 @@ fi
 
 eval "$(php -r "
 include '$CONFIG_FILE';
-printf('DB_HOST=%s\n', escapeshellarg(\$INFO['sql_host'] ?? ''));
-printf('DB_NAME=%s\n', escapeshellarg(\$INFO['sql_database'] ?? ''));
-printf('DB_USER=%s\n', escapeshellarg(\$INFO['sql_user'] ?? ''));
-printf('DB_PASS=%s\n', escapeshellarg(\$INFO['sql_pass'] ?? ''));
-printf('DB_PORT=%s\n', escapeshellarg(\$INFO['sql_port'] ?? ''));
+printf(\"DB_HOST=%s\n\", escapeshellarg(\$INFO['sql_host'] ?? ''));
+printf(\"DB_NAME=%s\n\", escapeshellarg(\$INFO['sql_database'] ?? ''));
+printf(\"DB_USER=%s\n\", escapeshellarg(\$INFO['sql_user'] ?? ''));
+printf(\"DB_PASS=%s\n\", escapeshellarg(\$INFO['sql_pass'] ?? ''));
+printf(\"DB_PORT=%s\n\", escapeshellarg(\$INFO['sql_port'] ?? ''));
 " 2>/dev/null)"
 
 if [ -z "$DB_HOST" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ]; then
