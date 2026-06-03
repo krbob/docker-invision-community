@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 CONFIG_FILE="$WWW_DIRECTORY/conf_global.php"
 TASK_FILE="$WWW_DIRECTORY/applications/core/interface/task/task.php"
@@ -9,33 +10,33 @@ if [ ! -f "$CONFIG_FILE" ]; then
     exit 1
 fi
 
-eval $(php -r "
-include '$CONFIG_FILE';
-printf('DB_HOST=%s ', escapeshellarg(\$INFO['sql_host']));
-printf('DB_NAME=%s ', escapeshellarg(\$INFO['sql_database']));
-printf('DB_USER=%s ', escapeshellarg(\$INFO['sql_user']));
-printf('DB_PASS=%s ', escapeshellarg(\$INFO['sql_pass']));
-printf('DB_PORT=%s ', escapeshellarg(\$INFO['sql_port']));
-" 2>/dev/null)
+if [ ! -f "$TASK_FILE" ]; then
+    echo "Task file $TASK_FILE does not exist." >&2
+    exit 1
+fi
 
-DB_HOST=$(echo $DB_HOST | sed "s/^'//;s/'$//")
-DB_NAME=$(echo $DB_NAME | sed "s/^'//;s/'$//")
-DB_USER=$(echo $DB_USER | sed "s/^'//;s/'$//")
-DB_PASS=$(echo $DB_PASS | sed "s/^'//;s/'$//")
-DB_PORT=$(echo $DB_PORT | sed "s/^'//;s/'$//")
+eval "$(php -r "
+include '$CONFIG_FILE';
+printf('DB_HOST=%s\n', escapeshellarg(\$INFO['sql_host'] ?? ''));
+printf('DB_NAME=%s\n', escapeshellarg(\$INFO['sql_database'] ?? ''));
+printf('DB_USER=%s\n', escapeshellarg(\$INFO['sql_user'] ?? ''));
+printf('DB_PASS=%s\n', escapeshellarg(\$INFO['sql_pass'] ?? ''));
+printf('DB_PORT=%s\n', escapeshellarg(\$INFO['sql_port'] ?? ''));
+" 2>/dev/null)"
 
 if [ -z "$DB_HOST" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ]; then
     echo "Failed to retrieve configuration data from file $CONFIG_FILE." >&2
     exit 1
 fi
 
-TASK_KEY=$(php -r "
+TASK_KEY=$(DB_HOST="$DB_HOST" DB_USER="$DB_USER" DB_PASS="$DB_PASS" DB_NAME="$DB_NAME" DB_PORT="$DB_PORT" SQL_QUERY="$SQL_QUERY" php -r "
 try {
-    \$mysqli = new mysqli('$DB_HOST', '$DB_USER', '$DB_PASS', '$DB_NAME', $DB_PORT);
+    \$port = getenv('DB_PORT') ?: 3306;
+    \$mysqli = new mysqli(getenv('DB_HOST'), getenv('DB_USER'), getenv('DB_PASS'), getenv('DB_NAME'), (int) \$port);
     if (\$mysqli->connect_error) {
         throw new Exception('Database connection error: ' . \$mysqli->connect_error);
     }
-    \$result = \$mysqli->query(\"$SQL_QUERY\");
+    \$result = \$mysqli->query(getenv('SQL_QUERY'));
     if (!\$result) {
         throw new Exception('Database query error: ' . \$mysqli->error);
     }
@@ -59,8 +60,7 @@ elif [ -z "$TASK_KEY" ]; then
     exit 1
 fi
 
-php -d memory_limit=-1 -d max_execution_time=0 ${TASK_FILE} "$TASK_KEY" 2>&1
-if [ $? -ne 0 ]; then
+if ! php -d memory_limit=-1 -d max_execution_time=0 "$TASK_FILE" "$TASK_KEY" 2>&1; then
     echo "Failed to execute PHP task." >&2
     exit 1
 fi
