@@ -1,4 +1,4 @@
-FROM redis:6.2-bookworm
+FROM redis:6.2
 
 COPY ips-entrypoint.sh /usr/local/bin/
 

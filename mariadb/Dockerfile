@@ -1,4 +1,4 @@
-FROM mariadb:10.11-jammy
+FROM mariadb:10
 
 COPY ips-entrypoint.sh create-backup.sh restore-backup.sh /usr/local/bin/
 
