@@ -13,14 +13,14 @@ Copy the `dotenv` file to `.env` and adjust the values in the `.env` file.
 Run the containers:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 After the first run, you may also want to generate a certificate and initialize the repository for backups:
 
 ```bash
-docker exec certbot certbot.sh certonly && docker-compose restart apache
-docker exec restic /bin/sh -c 'restic -r $RESTIC_REPOSITORY init'
+docker exec certbot certbot.sh certonly && docker compose restart apache
+docker exec restic restic init
 ```
 
 You might also want to enable memory-overcommit on the host to eliminate the Redis warning:
@@ -53,11 +53,11 @@ Periodically runs:
 ### Logrotate
 - By default, it retains 5 weeks of logs.
 
-### Mariadb 10.11
+### Mariadb 10
 - The default `innodb_buffer_pool_size` is 512 MB.
 - Scripts `create-backup.sh` and `restore-backup.sh` create and restore database backups, respectively.
 
-### PHP 8.1
+### PHP 8.2
 - The image includes all extensions used by IPS.
 - The default `pm.max_children` is 10.
 - The default `memory_limit` is 256 MB, `upload_max_filesize` is 32 MB, and `post_max_size` is 64 MB.
@@ -68,7 +68,7 @@ Periodically runs:
 - The default maximum memory usage is 128 MB.
 
 ### Restic
-- The `publish-backup.sh` and `restore-latest-backups.sh` scripts send and retrieve the latest backup files, respectively.
+- The `publish-backups.sh` and `restore-latest-backups.sh` scripts send and retrieve the latest backup files, respectively.
 - To use a previous snapshot, you can use:
 
 ```bash
@@ -80,6 +80,12 @@ docker exec restic restic restore <snapshot_id> --target / --include /var/backup
 ## Maintenance
 
 The `update-stack.sh` script rebuilds the stack using the latest versions of the base images.
+
+Run a local smoke test after stack changes:
+
+```bash
+./smoke-test.sh
+```
 
 ## Future Plans
 - Configuration of a test instance
