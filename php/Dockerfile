@@ -1,12 +1,13 @@
-FROM php:8.1-fpm-bookworm
+FROM php:8.2-fpm
 
 ENV WWW_DIRECTORY=/var/www/ips
 
-RUN apt-get update && apt-get install -y locales
-
 COPY locale.gen /etc/
 
-RUN dpkg-reconfigure --frontend=noninteractive locales
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends locales \
+	&& dpkg-reconfigure --frontend=noninteractive locales \
+	&& rm -rf /var/lib/apt/lists/*
 
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
