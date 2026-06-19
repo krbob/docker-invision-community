@@ -1,4 +1,4 @@
-FROM restic/restic:0.18.1
+FROM restic/restic:0.19.0
 
 COPY publish-backups.sh restore-latest-backups.sh /usr/local/bin/
 
