@@ -11,4 +11,4 @@ if [ ! -f /var/backup/ips.sql ]; then
     exit 1
 fi
 
-mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" < /var/backup/ips.sql
+MYSQL_PWD="$MARIADB_ROOT_PASSWORD" mariadb -uroot < /var/backup/ips.sql
