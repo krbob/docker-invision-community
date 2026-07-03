@@ -1,3 +1,9 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: 3
+
 services:
   apache:
     container_name: apache
@@ -23,6 +29,7 @@ services:
     depends_on:
       php:
         condition: service_healthy
+    logging: *default-logging
     restart: unless-stopped
 
   php:
@@ -44,6 +51,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    logging: *default-logging
     restart: unless-stopped
 
   mariadb:
@@ -66,6 +74,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
+    logging: *default-logging
     restart: unless-stopped
 
   redis:
@@ -81,6 +90,7 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    logging: *default-logging
     restart: unless-stopped
 
   cron:
@@ -103,6 +113,7 @@ services:
         condition: service_healthy
       restic:
         condition: service_started
+    logging: *default-logging
     restart: unless-stopped
 
   socket-proxy:
@@ -116,6 +127,7 @@ services:
       POST: 1
       ALLOW_START: 1
       TZ: ${TIMEZONE}
+    logging: *default-logging
     restart: unless-stopped
 
   logrotate:
@@ -126,6 +138,7 @@ services:
       - ${LOGS_DIRECTORY}:/var/log
     environment:
       TZ: ${TIMEZONE}
+    logging: *default-logging
 
   certbot:
     container_name: certbot
@@ -139,6 +152,7 @@ services:
       TZ: ${TIMEZONE}
     depends_on:
       - apache
+    logging: *default-logging
     restart: unless-stopped
 
   restic:
@@ -154,6 +168,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
       TZ: ${TIMEZONE}
+    logging: *default-logging
     restart: unless-stopped
 
 volumes:
