@@ -15,8 +15,14 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/80"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     depends_on:
-      - php
+      php:
+        condition: service_healthy
     restart: unless-stopped
 
   php:
@@ -28,9 +34,16 @@ services:
       - ${LOGS_DIRECTORY}/php:/usr/local/var/log
     environment:
       TZ: ${TIMEZONE}
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     depends_on:
-      - mariadb
-      - redis
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   mariadb:
@@ -47,6 +60,12 @@ services:
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
       TZ: ${TIMEZONE}
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MARIADB_ROOT_PASSWORD\" mariadb-admin ping -uroot --silent"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
   redis:
@@ -57,6 +76,11 @@ services:
       - ${LOGS_DIRECTORY}/redis:/var/log/redis
     environment:
       TZ: ${TIMEZONE}
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
   cron:
@@ -69,10 +93,14 @@ services:
     environment:
       TZ: ${TIMEZONE}
     depends_on:
-      - apache
-      - php
-      - mariadb
-      - restic
+      apache:
+        condition: service_healthy
+      php:
+        condition: service_healthy
+      mariadb:
+        condition: service_healthy
+      restic:
+        condition: service_started
     restart: unless-stopped
 
   logrotate:
