@@ -49,6 +49,7 @@ Periodically runs:
 - Logrotate
 - Certificate renewal
 - Creating and sending backups
+- Pruning old snapshots and checking repository integrity
 
 ### Logrotate
 - By default, it retains 5 weeks of logs.
@@ -69,6 +70,7 @@ Periodically runs:
 
 ### Restic
 - The `publish-backups.sh` and `restore-latest-backups.sh` scripts send and retrieve the latest backup files, respectively.
+- The `prune-backups.sh` script applies the retention policy (7 daily, 4 weekly, and 6 monthly snapshots) and prunes unused data.
 - To use a previous snapshot, you can use:
 
 ```bash

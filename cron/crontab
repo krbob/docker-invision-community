@@ -5,3 +5,5 @@
 0 5 * * * run-with-logging.sh "mariadb" "docker exec mariadb create-backup.sh"
 5 5 * * * run-with-logging.sh "apache" "docker exec apache create-backup.sh"
 10 5 * * * run-with-logging.sh "restic" "docker exec restic publish-backups.sh"
+0 6 * * 0 run-with-logging.sh "restic" "docker exec restic prune-backups.sh"
+30 6 1 * * run-with-logging.sh "restic" "docker exec restic restic check"
