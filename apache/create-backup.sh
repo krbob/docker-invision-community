@@ -2,6 +2,9 @@
 set -euo pipefail
 
 mkdir -p /var/backup
-rm -f /var/backup/ips.tar.gz
 
-tar -cpzf /var/backup/ips.tar.gz -C /var/www ips
+trap 'rm -f /var/backup/ips.tar.gz.tmp' EXIT
+
+tar -cpzf /var/backup/ips.tar.gz.tmp -C /var/www ips
+
+mv /var/backup/ips.tar.gz.tmp /var/backup/ips.tar.gz

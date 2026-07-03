@@ -7,6 +7,9 @@ if [ -z "${MARIADB_ROOT_PASSWORD:-}" ]; then
 fi
 
 mkdir -p /var/backup
-rm -f /var/backup/ips.sql
 
-mariadb-dump --all-databases -uroot -p"$MARIADB_ROOT_PASSWORD" > /var/backup/ips.sql
+trap 'rm -f /var/backup/ips.sql.tmp' EXIT
+
+mariadb-dump --all-databases --single-transaction --quick -uroot -p"$MARIADB_ROOT_PASSWORD" > /var/backup/ips.sql.tmp
+
+mv /var/backup/ips.sql.tmp /var/backup/ips.sql
