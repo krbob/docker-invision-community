@@ -35,6 +35,7 @@ echo "vm.overcommit_memory = 1" | sudo tee /etc/sysctl.d/memory-overcommit.conf
 - The image includes PHP FPM and SSL configuration.
 - A Snakeoil certificate is generated for localhost testing purposes.
 - All traffic is redirected to HTTPS.
+- HTTP/2 and HSTS are enabled.
 - Requests without a domain are forbidden.
 - `acme-challenge` support is added.
 - `RemoteIPHeader` support for Cloudflare is included.

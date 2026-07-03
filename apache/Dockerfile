@@ -25,6 +25,7 @@ RUN sed -i \
 	-e 's/^#\(LoadModule .*mod_ssl.so\)/\1/' \
 	-e 's/^#\(LoadModule .*mod_socache_shmcb.so\)/\1/' \
 	-e 's/^#\(LoadModule .*mod_remoteip.so\)/\1/' \
+	-e 's/^#\(LoadModule .*mod_http2.so\)/\1/' \
 	-e 's/^#ServerName .*/ServerName ${DOMAIN_NAME}/' \
 	${HTTPD_PREFIX}/conf/httpd.conf
 
