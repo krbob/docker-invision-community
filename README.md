@@ -76,7 +76,7 @@ Periodically runs:
 ```bash
 docker exec restic restic snapshots
 docker exec restic restic restore <snapshot_id> --target / --include /var/backup/db/ips.sql
-docker exec restic restic restore <snapshot_id> --target / --include /var/backup/www/ips.tar.gz
+docker exec restic restic restore <snapshot_id> --target / --include /var/backup/www/ips.tar
 ```
 
 ## Maintenance

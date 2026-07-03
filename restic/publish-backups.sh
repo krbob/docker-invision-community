@@ -6,9 +6,9 @@ if [ -z "${AWS_ACCESS_KEY_ID:-}" ] || [ -z "${AWS_SECRET_ACCESS_KEY:-}" ] || [ -
   exit 1
 fi
 
-if [ ! -f /var/backup/db/ips.sql ] || [ ! -f /var/backup/www/ips.tar.gz ]; then
+if [ ! -f /var/backup/db/ips.sql ] || [ ! -f /var/backup/www/ips.tar ]; then
   echo "Missing backup files."
   exit 1
 fi
 
-restic backup /var/backup/db/ips.sql /var/backup/www/ips.tar.gz
+restic backup /var/backup/db/ips.sql /var/backup/www/ips.tar

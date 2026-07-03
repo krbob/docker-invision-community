@@ -8,4 +8,4 @@ fi
 
 restic restore latest --target / \
   --include /var/backup/db/ips.sql \
-  --include /var/backup/www/ips.tar.gz
+  --include /var/backup/www/ips.tar
