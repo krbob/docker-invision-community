@@ -88,11 +88,13 @@ services:
     build:
       context: cron
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
       - ${LOGS_DIRECTORY}/cron:/var/log
     environment:
+      DOCKER_HOST: tcp://socket-proxy:2375
       TZ: ${TIMEZONE}
     depends_on:
+      socket-proxy:
+        condition: service_started
       apache:
         condition: service_healthy
       php:
@@ -101,6 +103,19 @@ services:
         condition: service_healthy
       restic:
         condition: service_started
+    restart: unless-stopped
+
+  socket-proxy:
+    container_name: socket-proxy
+    image: tecnativa/docker-socket-proxy:0.3
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      CONTAINERS: 1
+      EXEC: 1
+      POST: 1
+      ALLOW_START: 1
+      TZ: ${TIMEZONE}
     restart: unless-stopped
 
   logrotate:

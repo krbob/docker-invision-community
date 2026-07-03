@@ -44,6 +44,8 @@ echo "vm.overcommit_memory = 1" | sudo tee /etc/sysctl.d/memory-overcommit.conf
 - The `certbot.sh` script generates a new certificate or renews it using the webroot method, depending on the `certonly` and `renew` options.
 
 ### Cron
+Talks to Docker through the `socket-proxy` container, which exposes only the API endpoints needed to run commands in other containers, instead of mounting the Docker socket directly.
+
 Periodically runs:
 - IPS Task
 - Logrotate
