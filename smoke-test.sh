@@ -21,6 +21,7 @@ CRON_LOG_DIRECTORY=
 SMOKE_SECRETS_DIRECTORY=
 MARIADB_BACKUP_DIRECTORY=
 MARIADB_BACKUP_CONTAINER=invision-smoke-mariadb-backup
+MIGRATION_DIRECTORY=
 
 if [ -f .env ]; then
     ENV_ARGS=(--env-file .env)
@@ -42,6 +43,10 @@ image_id() {
     fi
 
     echo "$image"
+}
+
+file_mode() {
+    stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"
 }
 
 run_image() {
@@ -105,6 +110,27 @@ smoke_mariadb_backup_restore() {
     test "$restored_value" = restored
 }
 
+smoke_secret_migration() {
+    echo "Smoke: secret migration"
+    MIGRATION_DIRECTORY=$(mktemp -d)
+
+    printf '%s\n' \
+        'MARIADB_ROOT_PASSWORD=smoke-root-password' \
+        'MARIADB_PASSWORD=smoke-user-password' \
+        'RESTIC_PASSWORD=smoke-restic-password' \
+        'AWS_ACCESS_KEY_ID=smoke-access-key' \
+        'AWS_SECRET_ACCESS_KEY=smoke-secret-access-key' > "$MIGRATION_DIRECTORY/.env"
+
+    ./migrate-secrets.sh "$MIGRATION_DIRECTORY/.env" "$MIGRATION_DIRECTORY/secrets" >/dev/null
+    test "$(file_mode "$MIGRATION_DIRECTORY/secrets")" = 700
+    test "$(file_mode "$MIGRATION_DIRECTORY/secrets/mariadb_root_password")" = 600
+    test "$(<"$MIGRATION_DIRECTORY/secrets/mariadb_root_password")" = smoke-root-password
+    test "$(<"$MIGRATION_DIRECTORY/secrets/mariadb_password")" = smoke-user-password
+    test "$(<"$MIGRATION_DIRECTORY/secrets/restic_password")" = smoke-restic-password
+    rg -qFx 'AWS_ACCESS_KEY_ID=smoke-access-key' "$MIGRATION_DIRECTORY/secrets/aws_credentials"
+    rg -qFx 'AWS_SECRET_ACCESS_KEY=smoke-secret-access-key' "$MIGRATION_DIRECTORY/secrets/aws_credentials"
+}
+
 cleanup() {
     compose down --remove-orphans -v >/dev/null 2>&1 || true
     if [ -n "$CRON_LOG_DIRECTORY" ]; then
@@ -116,9 +142,14 @@ cleanup() {
     if [ -n "$MARIADB_BACKUP_DIRECTORY" ]; then
         rm -rf "$MARIADB_BACKUP_DIRECTORY"
     fi
+    if [ -n "$MIGRATION_DIRECTORY" ]; then
+        rm -rf "$MIGRATION_DIRECTORY"
+    fi
     docker rm -f "$MARIADB_BACKUP_CONTAINER" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
+
+smoke_secret_migration
 
 SMOKE_SECRETS_DIRECTORY=$(mktemp -d)
 printf '%s\n' 'smoke-mariadb-root-password' > "$SMOKE_SECRETS_DIRECTORY/mariadb_root_password"

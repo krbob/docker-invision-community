@@ -22,6 +22,17 @@ chmod 700 secrets
 and an `aws_credentials` file defining `AWS_ACCESS_KEY_ID` and
 `AWS_SECRET_ACCESS_KEY`.
 
+When upgrading an existing deployment that still keeps those four values in
+`.env`, run this once before `docker compose up`:
+
+```bash
+./migrate-secrets.sh
+```
+
+It refuses to overwrite an existing secret file. After confirming the upgraded
+stack works, remove `MARIADB_ROOT_PASSWORD`, `MARIADB_PASSWORD`,
+`RESTIC_PASSWORD`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` from `.env`.
+
 Run the containers:
 
 ```bash
