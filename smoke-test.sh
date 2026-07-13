@@ -21,6 +21,7 @@ CRON_LOG_DIRECTORY=
 SMOKE_SECRETS_DIRECTORY=
 MARIADB_BACKUP_DIRECTORY=
 MARIADB_BACKUP_CONTAINER=invision-smoke-mariadb-backup
+APACHE_START_CONTAINER=invision-smoke-apache-start
 MIGRATION_DIRECTORY=
 
 if [ -f .env ]; then
@@ -71,6 +72,25 @@ run_image_entrypoint() {
         -e TZ=UTC \
         --entrypoint "$entrypoint" \
         "$(image_id "$service")" "$@"
+}
+
+smoke_apache_start() {
+    echo "Smoke: apache default startup"
+    docker run -d --rm \
+        --name "$APACHE_START_CONTAINER" \
+        -e DOMAIN_NAME=example.com \
+        -e TZ=UTC \
+        "$(image_id apache)" >/dev/null
+
+    for _ in $(seq 1 10); do
+        if docker exec "$APACHE_START_CONTAINER" bash -c 'exec 3<>/dev/tcp/127.0.0.1/80' >/dev/null 2>&1; then
+            return
+        fi
+        sleep 0.5
+    done
+
+    docker logs "$APACHE_START_CONTAINER" >&2
+    return 1
 }
 
 smoke_mariadb_backup_restore() {
@@ -147,6 +167,7 @@ cleanup() {
         rm -rf "$MIGRATION_DIRECTORY"
     fi
     docker rm -f "$MARIADB_BACKUP_CONTAINER" >/dev/null 2>&1 || true
+    docker rm -f "$APACHE_START_CONTAINER" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -164,6 +185,7 @@ compose config --quiet
 compose build --pull
 
 run_image apache httpd -t
+smoke_apache_start
 run_image apache sh -c 'test ! -s /usr/local/apache2/conf/extra/trusted-proxies.conf'
 
 echo "Smoke: apache trusted proxy configuration"
