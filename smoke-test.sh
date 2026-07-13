@@ -159,7 +159,15 @@ docker run --rm \
 run_image logrotate logrotate --version
 run_image_entrypoint certbot certbot --version
 run_image_entrypoint certbot sh -c 'mkdir -p /var/www/certbot && certbot renew --webroot -w /var/www/certbot --dry-run --non-interactive --config-dir /tmp/letsencrypt --work-dir /tmp/work --logs-dir /tmp/logs'
-run_image_entrypoint restic restic version
+echo "Smoke: restic"
+docker run --rm \
+    --entrypoint restic \
+    -e RESTIC_REPOSITORY=s3:https://s3.amazonaws.com/smoke-bucket \
+    -e RESTIC_PASSWORD_FILE=/run/secrets/restic_password \
+    -e AWS_CREDENTIALS_FILE=/run/secrets/aws_credentials \
+    -v "$SMOKE_SECRETS_DIRECTORY:/run/secrets:ro" \
+    "$(image_id restic)" \
+    version
 
 echo "Smoke: restic credential loading"
 docker run --rm \
