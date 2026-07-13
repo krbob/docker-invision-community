@@ -9,7 +9,19 @@ git clone https://github.com/krbob/docker-invision-community.git
 cd docker-invision-community
 ```
 
-Copy the `dotenv` file to `.env` and adjust the values in the `.env` file.
+Copy the `dotenv` file to `.env`, create the private secrets directory from the
+template, and replace every placeholder with a real value:
+
+```bash
+cp dotenv .env
+cp -R secrets.example secrets
+chmod 700 secrets
+```
+
+`secrets/` is ignored by Git. It contains the MariaDB passwords, Restic password,
+and an `aws_credentials` file defining `AWS_ACCESS_KEY_ID` and
+`AWS_SECRET_ACCESS_KEY`.
+
 Run the containers:
 
 ```bash
@@ -79,6 +91,13 @@ Periodically runs:
 ### Restic
 - The `publish-backups.sh` and `restore-latest-backups.sh` scripts send and retrieve the latest backup files, respectively.
 - The `prune-backups.sh` script applies the retention policy (7 daily, 4 weekly, and 6 monthly snapshots) and prunes unused data.
+- New snapshots are tagged `invision`; use a dedicated Restic repository for this stack.
+- The database dump contains only `${MARIADB_DATABASE}`, including routines and events, rather than MariaDB system databases.
+- The stack does not put Invision Community into maintenance mode itself. Schedule the
+  backup during an application maintenance window so database records and uploaded files
+  represent the same point in time.
+- The monthly integrity check reads a rotating 5% subset of repository data. Perform a
+  full restore drill in an isolated environment at least quarterly.
 - To use a previous snapshot, you can use:
 
 ```bash
@@ -86,6 +105,11 @@ docker exec restic restic snapshots
 docker exec restic restic restore <snapshot_id> --target / --include /var/backup/db/ips.sql
 docker exec restic restic restore <snapshot_id> --target / --include /var/backup/www/ips.tar
 ```
+
+For recovery, first enable maintenance mode or stop the application containers. Restore
+the Restic snapshot, then run `docker exec mariadb restore-backup.sh` and
+`docker exec apache restore-backup.sh`. Start the application only after both restores
+finish successfully.
 
 ## Maintenance
 
