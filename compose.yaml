@@ -4,8 +4,14 @@ x-logging: &default-logging
     max-size: 10m
     max-file: 3
 
+x-runtime-security: &default-runtime-security
+  init: true
+  security_opt:
+    - no-new-privileges:true
+
 services:
   apache:
+    <<: *default-runtime-security
     container_name: apache
     build:
       context: apache
@@ -37,6 +43,7 @@ services:
     restart: unless-stopped
 
   php:
+    <<: *default-runtime-security
     container_name: php
     build:
       context: php
@@ -61,6 +68,7 @@ services:
     restart: unless-stopped
 
   mariadb:
+    <<: *default-runtime-security
     container_name: mariadb
     build:
       context: mariadb
@@ -89,6 +97,7 @@ services:
     restart: unless-stopped
 
   redis:
+    <<: *default-runtime-security
     container_name: redis
     build:
       context: redis
@@ -107,6 +116,7 @@ services:
     restart: unless-stopped
 
   cron:
+    <<: *default-runtime-security
     container_name: cron
     build:
       context: cron
@@ -132,6 +142,7 @@ services:
     restart: unless-stopped
 
   socket-proxy:
+    <<: *default-runtime-security
     container_name: socket-proxy
     # renovate: datasource=docker depName=tecnativa/docker-socket-proxy
     image: tecnativa/docker-socket-proxy:v0.4.2@sha256:1f3a6f303320723d199d2316a3e82b2e2685d86c275d5e3deeaf182573b47476
@@ -149,6 +160,7 @@ services:
     restart: unless-stopped
 
   logrotate:
+    <<: *default-runtime-security
     container_name: logrotate
     build:
       context: logrotate
@@ -160,6 +172,7 @@ services:
     logging: *default-logging
 
   certbot:
+    <<: *default-runtime-security
     container_name: certbot
     build:
       context: certbot
@@ -177,6 +190,7 @@ services:
     restart: unless-stopped
 
   restic:
+    <<: *default-runtime-security
     container_name: restic
     build:
       context: restic

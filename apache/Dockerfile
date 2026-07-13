@@ -29,8 +29,8 @@ RUN sed -i \
 	-e 's/^#\(LoadModule .*mod_remoteip.so\)/\1/' \
 	-e 's/^#\(LoadModule .*mod_http2.so\)/\1/' \
 	-e 's/^#ServerName .*/ServerName ${DOMAIN_NAME}/' \
-	${HTTPD_PREFIX}/conf/httpd.conf
+	"${HTTPD_PREFIX}/conf/httpd.conf"
 
-RUN sed -i '/<VirtualHost/,/<\/VirtualHost>/ s/^/#/' ${HTTPD_PREFIX}/conf/extra/httpd-ssl.conf
+RUN sed -i '/<VirtualHost/,/<\/VirtualHost>/ s/^/#/' "${HTTPD_PREFIX}/conf/extra/httpd-ssl.conf"
 
 ENTRYPOINT ["ips-entrypoint.sh"]
