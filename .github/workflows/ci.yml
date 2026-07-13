@@ -20,8 +20,8 @@ jobs:
 
       - name: Lint shell scripts
         run: |
-          shellcheck --shell=sh apache/ips-entrypoint.sh certbot/certbot.sh cron/run-with-logging.sh restic/*.sh
-          shellcheck --shell=bash apache/*.sh mariadb/*.sh php/*.sh smoke-test.sh update-stack.sh
+          shellcheck --shell=sh apache/ips-entrypoint.sh certbot/certbot.sh cron/run-with-logging.sh restic/restic restic/*.sh
+          shellcheck --shell=bash apache/*.sh mariadb/*.sh php/*.sh migrate-secrets.sh smoke-test.sh update-stack.sh
 
       - name: Lint Dockerfiles
         run: |
