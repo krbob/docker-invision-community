@@ -34,3 +34,4 @@ RUN sed -i \
 RUN sed -i '/<VirtualHost/,/<\/VirtualHost>/ s/^/#/' "${HTTPD_PREFIX}/conf/extra/httpd-ssl.conf"
 
 ENTRYPOINT ["ips-entrypoint.sh"]
+CMD ["httpd-foreground"]
