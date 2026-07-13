@@ -1,4 +1,6 @@
 DOMAIN_NAME=example.com
+# Comma-separated CIDRs of trusted reverse proxies. Leave empty for direct access.
+TRUSTED_PROXY_CIDRS=
 WWW_DIRECTORY=/var/www/ips
 LOGS_DIRECTORY=/var/log/ips
 MARIADB_ROOT_PASSWORD=rootpassword

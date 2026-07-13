@@ -17,7 +17,11 @@ services:
       - ${BACKUP_DIRECTORY}/www:/var/backup
     environment:
       DOMAIN_NAME: ${DOMAIN_NAME}
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
       TZ: ${TIMEZONE}
+    networks:
+      - web
+      - backend
     ports:
       - "80:80"
       - "443:443"
@@ -41,6 +45,8 @@ services:
       - ${LOGS_DIRECTORY}/php:/usr/local/var/log
     environment:
       TZ: ${TIMEZONE}
+    networks:
+      - backend
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000"]
       interval: 30s
@@ -68,6 +74,8 @@ services:
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
       TZ: ${TIMEZONE}
+    networks:
+      - backend
     healthcheck:
       test: ["CMD-SHELL", "MYSQL_PWD=\"$$MARIADB_ROOT_PASSWORD\" mariadb-admin ping -uroot --silent"]
       interval: 30s
@@ -85,6 +93,8 @@ services:
       - ${LOGS_DIRECTORY}/redis:/var/log/redis
     environment:
       TZ: ${TIMEZONE}
+    networks:
+      - backend
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
       interval: 30s
@@ -102,6 +112,8 @@ services:
     environment:
       DOCKER_HOST: tcp://socket-proxy:2375
       TZ: ${TIMEZONE}
+    networks:
+      - automation
     depends_on:
       socket-proxy:
         condition: service_started
@@ -127,6 +139,8 @@ services:
       POST: 1
       ALLOW_START: 1
       TZ: ${TIMEZONE}
+    networks:
+      - automation
     logging: *default-logging
     restart: unless-stopped
 
@@ -138,6 +152,7 @@ services:
       - ${LOGS_DIRECTORY}:/var/log
     environment:
       TZ: ${TIMEZONE}
+    network_mode: none
     logging: *default-logging
 
   certbot:
@@ -150,6 +165,8 @@ services:
     environment:
       DOMAIN_NAME: ${DOMAIN_NAME}
       TZ: ${TIMEZONE}
+    networks:
+      - egress
     depends_on:
       - apache
     logging: *default-logging
@@ -168,9 +185,19 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
       TZ: ${TIMEZONE}
+    networks:
+      - egress
     logging: *default-logging
     restart: unless-stopped
 
 volumes:
   database:
   certificates:
+
+networks:
+  web:
+  backend:
+    internal: true
+  automation:
+    internal: true
+  egress:
