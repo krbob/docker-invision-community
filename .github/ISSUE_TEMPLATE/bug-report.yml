@@ -1,0 +1,41 @@
+name: Bug report
+description: Report a reproducible problem with this Docker Compose stack.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include passwords, AWS keys, database dumps, or other secrets.
+  - type: input
+    id: version
+    attributes:
+      label: Stack commit or image digest
+      description: Run `git rev-parse HEAD` and include any relevant image digest.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Docker Engine, Docker Compose, host OS, and architecture.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: Include sanitized commands and configuration only.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs
+      description: Remove domains, credentials, IP addresses, and private data when possible.
