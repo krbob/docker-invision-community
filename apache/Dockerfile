@@ -1,4 +1,5 @@
-FROM httpd:2.4
+# renovate: datasource=docker depName=library/httpd
+FROM httpd:2.4@sha256:393435ee1a31437adeb1f03c134224c9ce5fa5f527e8c0cb9bea576b0d6fc742
 
 ENV WWW_DIRECTORY=/var/www/ips
 

@@ -1,4 +1,5 @@
-FROM mariadb:10
+# renovate: datasource=docker depName=library/mariadb
+FROM mariadb:10@sha256:be981e4113326ada8d6004174dd09eeaefc03094037f811182a52d4f2e737350
 
 COPY ips-entrypoint.sh create-backup.sh restore-backup.sh /usr/local/bin/
 

@@ -1,4 +1,7 @@
-FROM php:8.2-fpm
+# syntax=docker/dockerfile:1
+
+# renovate: datasource=docker depName=library/php
+FROM php:8.2-fpm@sha256:0cb0ccc62ee5ee47909b52b74fe180c852439533a83dd7a01c8a65dc069e2591
 
 ENV WWW_DIRECTORY=/var/www/ips
 
@@ -9,7 +12,9 @@ RUN apt-get update \
 	&& dpkg-reconfigure --frontend=noninteractive locales \
 	&& rm -rf /var/lib/apt/lists/*
 
-ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+ADD --checksum=sha256:7c133ae4b9490d912287188c62ea570729cfa74f0ea357e4be672ce696b4aa29 \
+    https://github.com/mlocati/docker-php-extension-installer/releases/download/2.11.12/install-php-extensions \
+    /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/install-php-extensions
 
