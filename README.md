@@ -1,142 +1,117 @@
 # Invision Community Docker Compose Stack
 
-This repository contains the complete Docker stack needed to run Invision Community 4.7.
+[![CI](https://github.com/krbob/docker-invision-community/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/krbob/docker-invision-community/actions/workflows/ci.yml)
 
-## Installation
+A Docker Compose stack for self-hosting Invision Community with Apache, PHP-FPM,
+MariaDB, Redis, Let's Encrypt certificates, Restic backups, and scheduled
+maintenance.
 
-```bash
-git clone https://github.com/krbob/docker-invision-community.git
-cd docker-invision-community
-```
+This repository provides infrastructure only. It does not include Invision
+Community application files or a licence; obtain both from Invision Community
+and place the application files in `WWW_DIRECTORY` before starting the stack.
+It is not an official Invision Community project.
 
-Copy the `dotenv` file to `.env`, create the private secrets directory from the
-template, and replace every placeholder with a real value:
+## Requirements
 
-```bash
-cp dotenv .env
-cp -R secrets.example secrets
-chmod 700 secrets
-```
+- Docker Engine and Docker Compose v2, available to the deployment user.
+- A hostname whose apex and `www` DNS records point at this host before issuing
+  a certificate.
+- Inbound TCP ports 80 and 443 available to Docker and to Let's Encrypt.
+- Writable host directories selected for application files, logs, certificate
+  challenges, and backups.
+- A dedicated Restic repository location and credentials reachable from the host.
 
-`secrets/` is ignored by Git. It contains the MariaDB passwords, Restic password,
-and an `aws_credentials` file defining `AWS_ACCESS_KEY_ID` and
-`AWS_SECRET_ACCESS_KEY`.
+The stack uses fixed container names (`apache`, `php`, `mariadb`, and others),
+so run only one instance on a Docker host.
 
-When upgrading an existing deployment that still keeps those four values in
-`.env`, run this once before `docker compose up`:
+## Quick start
 
-```bash
-./migrate-secrets.sh
-```
+1. Clone the repository and create private configuration files:
 
-It adds `SECRETS_DIRECTORY` when it is absent and refuses to overwrite an
-existing secret file. After confirming the upgraded stack works, remove `MARIADB_ROOT_PASSWORD`, `MARIADB_PASSWORD`,
-`RESTIC_PASSWORD`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` from `.env`.
+   ```bash
+   git clone https://github.com/krbob/docker-invision-community.git
+   cd docker-invision-community
+   cp dotenv .env
+   cp -R secrets.example secrets
+   chmod 700 secrets
+   chmod 600 secrets/*
+   ```
 
-Run the containers:
+2. Edit `.env`, put the Invision Community files in `WWW_DIRECTORY`, and replace
+   every placeholder in `secrets/`. Do not commit either `.env` or `secrets/`.
 
-```bash
-docker compose up -d
-```
+3. Validate and start the stack:
 
-After the first run, you may also want to generate a certificate and initialize the repository for backups:
+   ```bash
+   docker compose config --quiet
+   docker compose up -d --build
+   docker compose ps
+   ```
 
-```bash
-docker exec certbot certbot.sh certonly && docker compose restart apache
-docker exec restic restic init
-```
+   `apache`, `php`, `mariadb`, and `redis` should report `healthy`.
 
-You might also want to enable memory-overcommit on the host to eliminate the Redis warning:
+4. After DNS and ports are ready, issue the first certificate and initialize
+   Restic. Both are required before relying on HTTPS and scheduled backups:
 
-```bash
-echo "vm.overcommit_memory = 1" | sudo tee /etc/sysctl.d/memory-overcommit.conf
-```
+   ```bash
+   docker exec certbot certbot.sh certonly
+   docker compose restart apache
+   docker exec restic restic init
+   ```
 
-## Detailed Configuration
+For a deployment upgrading from plaintext `.env` secrets, run
+`./migrate-secrets.sh` before the first `docker compose up`. It creates
+restricted secret files and adds `SECRETS_DIRECTORY` when required. After a
+successful deployment, remove the five plaintext secret entries from `.env`.
 
-### Apache 2.4
-- The image includes PHP FPM and SSL configuration.
-- A Snakeoil certificate is generated for localhost testing purposes.
-- All traffic is redirected to HTTPS.
-- HTTP/2 and HSTS are enabled.
-- Requests without a domain are forbidden.
-- `acme-challenge` support is added.
-- Cloudflare client-IP support is opt-in. Set `TRUSTED_PROXY_CIDRS` to the current,
-  comma-separated Cloudflare CIDR ranges only when the origin accepts traffic exclusively
-  from Cloudflare. When unset, `CF-Connecting-IP` is ignored.
-- Scripts `create-backup.sh` and `restore-backup.sh` create and restore backups of www files, respectively.
+## Configuration
 
-### Certbot
-- The `certbot.sh` script generates a new certificate or renews it using the webroot method, depending on the `certonly` and `renew` options.
+| Variable | Purpose |
+| --- | --- |
+| `DOMAIN_NAME` | Public domain; both it and `www.<domain>` are requested from Let's Encrypt. |
+| `TRUSTED_PROXY_CIDRS` | Comma-separated trusted proxy CIDRs. Leave empty for direct access. |
+| `SECRETS_DIRECTORY` | Directory with the four private secret files, normally `./secrets`. |
+| `WWW_DIRECTORY` | Host directory containing the licensed Invision Community installation. |
+| `LOGS_DIRECTORY` | Host directory for Apache, PHP, MariaDB, Redis, and Cron logs. |
+| `CERTBOT_WWW_DIRECTORY` | Shared ACME webroot. |
+| `BACKUP_DIRECTORY` | Host directory for database dumps and application archives before Restic uploads. |
+| `MARIADB_DATABASE` / `MARIADB_USER` | Database name and non-root application user. |
+| `RESTIC_REPOSITORY` | Dedicated Restic repository URL. |
+| `AWS_DEFAULT_REGION` | Region used by the S3-compatible Restic backend. |
+| `TIMEZONE` | IANA timezone used by containers and scheduled jobs. |
 
-### Cron
-Talks to Docker through the `socket-proxy` container, which exposes only the API endpoints needed to run commands in other containers, instead of mounting the Docker socket directly.
+`secrets/` must contain these files, each with mode `0600`:
 
-The socket proxy is isolated with Cron on a dedicated internal network. Do not attach
-application containers to this network.
+| File | Contents |
+| --- | --- |
+| `mariadb_root_password` | MariaDB root password. |
+| `mariadb_password` | Password for `MARIADB_USER`. |
+| `restic_password` | Restic repository password. |
+| `aws_credentials` | `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` assignments. |
 
-Periodically runs:
-- IPS Task
-- Logrotate
-- Certificate renewal
-- Creating and sending backups
-- Pruning old snapshots and checking repository integrity
+Set `TRUSTED_PROXY_CIDRS` only when the origin accepts traffic exclusively from
+the listed proxies. Otherwise a client could spoof `CF-Connecting-IP`.
 
-### Logrotate
-- By default, it retains 5 weeks of logs.
+## Operations
 
-### Mariadb 10
-- The default `innodb_buffer_pool_size` is 512 MB.
-- Scripts `create-backup.sh` and `restore-backup.sh` create and restore database backups, respectively.
+- Inspect status and logs with `docker compose ps` and `docker compose logs -f`.
+- Run `./update-stack.sh` to pull the reviewed, digest-pinned images and rebuild
+  the stack. It also removes dangling Docker images; take a backup first.
+- Run `./smoke-test.sh` after stack changes. It builds all images and verifies
+  service entry points, Apache startup, secret handling, and database
+  backup/restore.
+- Scheduled backup, retention, recovery, and troubleshooting procedures are in
+  [docs/operations.md](docs/operations.md).
 
-### PHP 8.2
-- The image includes all extensions used by IPS.
-- The default `pm.max_children` is 10.
-- The default `memory_limit` is 256 MB, `upload_max_filesize` is 32 MB, and `post_max_size` is 64 MB.
-- Default locales are defined in the `locale.gen` file (necessary for IPS translations).
-- The `ips-task.sh` script retrieves the required key from the database and executes the IPS task.
+## Architecture and security
 
-### Redis 6.2
-- The default maximum memory usage is 128 MB.
+See [docs/architecture.md](docs/architecture.md) for service boundaries,
+networks, volumes, and the Docker socket proxy restriction. See
+[SECURITY.md](SECURITY.md) for vulnerability reporting.
 
-### Restic
-- The `publish-backups.sh` and `restore-latest-backups.sh` scripts send and retrieve the latest backup files, respectively.
-- The `prune-backups.sh` script applies the retention policy (7 daily, 4 weekly, and 6 monthly snapshots) and prunes unused data.
-- New snapshots are tagged `invision`; use a dedicated Restic repository for this stack.
-- The database dump contains only `${MARIADB_DATABASE}`, including routines and events, rather than MariaDB system databases.
-- The stack does not put Invision Community into maintenance mode itself. Schedule the
-  backup during an application maintenance window so database records and uploaded files
-  represent the same point in time.
-- The monthly integrity check reads a rotating 5% subset of repository data. Perform a
-  full restore drill in an isolated environment at least quarterly.
-- To use a previous snapshot, you can use:
+## Contributing
 
-```bash
-docker exec restic restic snapshots
-docker exec restic restic restore <snapshot_id> --target / --include /var/backup/db/ips.sql
-docker exec restic restic restore <snapshot_id> --target / --include /var/backup/www/ips.tar
-```
-
-For recovery, first enable maintenance mode or stop the application containers. Restore
-the Restic snapshot, then run `docker exec mariadb restore-backup.sh` and
-`docker exec apache restore-backup.sh`. Start the application only after both restores
-finish successfully.
-
-## Maintenance
-
-The `update-stack.sh` script rebuilds the stack from the reviewed, digest-pinned images.
-Renovate should be enabled for the repository to propose image updates as reviewable pull requests.
-
-Run a local smoke test after stack changes:
-
-```bash
-./smoke-test.sh
-```
-
-## Future Plans
-- Configuration of a test instance
-- Configuration of service monitoring on Grafana Cloud
-
----
-
-Feel free to contribute to the project by submitting issues or pull requests. Any suggestions for improvements are welcome.
+Report defects or ideas through the issue templates. Changes should pass
+`./smoke-test.sh` before submission. This repository is licensed under the
+[MIT License](LICENSE); that licence covers this repository only, not Invision
+Community.
