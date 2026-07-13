@@ -121,7 +121,7 @@ smoke_mariadb_backup_restore() {
 
     docker exec "$MARIADB_BACKUP_CONTAINER" sh -c 'MYSQL_PWD="$(cat /run/secrets/mariadb_root_password)" mariadb -uroot invision_smoke -e "CREATE TABLE backup_check (value VARCHAR(32)); INSERT INTO backup_check VALUES (\"restored\");"'
     docker exec "$MARIADB_BACKUP_CONTAINER" create-backup.sh
-    rg -q 'CREATE DATABASE.*invision_smoke' "$MARIADB_BACKUP_DIRECTORY/ips.sql"
+    grep -qE 'CREATE DATABASE.*invision_smoke' "$MARIADB_BACKUP_DIRECTORY/ips.sql"
 
     docker exec "$MARIADB_BACKUP_CONTAINER" sh -c 'MYSQL_PWD="$(cat /run/secrets/mariadb_root_password)" mariadb -uroot invision_smoke -e "DROP TABLE backup_check;"'
     docker exec "$MARIADB_BACKUP_CONTAINER" restore-backup.sh
@@ -142,14 +142,14 @@ smoke_secret_migration() {
         'AWS_SECRET_ACCESS_KEY=smoke-secret-access-key' > "$MIGRATION_DIRECTORY/.env"
 
     ./migrate-secrets.sh "$MIGRATION_DIRECTORY/.env" "$MIGRATION_DIRECTORY/secrets" >/dev/null
-    rg -qFx "SECRETS_DIRECTORY=$MIGRATION_DIRECTORY/secrets" "$MIGRATION_DIRECTORY/.env"
+    grep -qFx "SECRETS_DIRECTORY=$MIGRATION_DIRECTORY/secrets" "$MIGRATION_DIRECTORY/.env"
     test "$(file_mode "$MIGRATION_DIRECTORY/secrets")" = 700
     test "$(file_mode "$MIGRATION_DIRECTORY/secrets/mariadb_root_password")" = 600
     test "$(<"$MIGRATION_DIRECTORY/secrets/mariadb_root_password")" = smoke-root-password
     test "$(<"$MIGRATION_DIRECTORY/secrets/mariadb_password")" = smoke-user-password
     test "$(<"$MIGRATION_DIRECTORY/secrets/restic_password")" = smoke-restic-password
-    rg -qFx 'AWS_ACCESS_KEY_ID=smoke-access-key' "$MIGRATION_DIRECTORY/secrets/aws_credentials"
-    rg -qFx 'AWS_SECRET_ACCESS_KEY=smoke-secret-access-key' "$MIGRATION_DIRECTORY/secrets/aws_credentials"
+    grep -qFx 'AWS_ACCESS_KEY_ID=smoke-access-key' "$MIGRATION_DIRECTORY/secrets/aws_credentials"
+    grep -qFx 'AWS_SECRET_ACCESS_KEY=smoke-secret-access-key' "$MIGRATION_DIRECTORY/secrets/aws_credentials"
 }
 
 cleanup() {
