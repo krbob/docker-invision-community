@@ -1,4 +1,5 @@
-FROM redis:6.2
+# renovate: datasource=docker depName=library/redis
+FROM redis:6.2@sha256:da7091440b2b4d9456603be812dba895cd75bedd66564d7f01f1f010521f8467
 
 COPY ips-entrypoint.sh /usr/local/bin/
 

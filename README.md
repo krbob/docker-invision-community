@@ -89,7 +89,8 @@ docker exec restic restic restore <snapshot_id> --target / --include /var/backup
 
 ## Maintenance
 
-The `update-stack.sh` script rebuilds the stack using the latest versions of the base images.
+The `update-stack.sh` script rebuilds the stack from the reviewed, digest-pinned images.
+Renovate should be enabled for the repository to propose image updates as reviewable pull requests.
 
 Run a local smoke test after stack changes:
 
