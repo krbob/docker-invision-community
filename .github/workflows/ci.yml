@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install --yes shellcheck
+
+      - name: Lint shell scripts
+        run: |
+          shellcheck --shell=sh apache/ips-entrypoint.sh certbot/certbot.sh cron/run-with-logging.sh restic/*.sh
+          shellcheck --shell=bash apache/*.sh mariadb/*.sh php/*.sh smoke-test.sh update-stack.sh
+
+      - name: Lint Dockerfiles
+        run: |
+          for dockerfile in */Dockerfile; do
+            docker run --rm -i \
+              -v "$PWD/.hadolint.yaml:/hadolint.yaml:ro" \
+              --entrypoint /bin/hadolint \
+              hadolint/hadolint:latest@sha256:27086352fd5e1907ea2b934eb1023f217c5ae087992eb59fde121dce9c9ff21e \
+              --config /hadolint.yaml - < "$dockerfile"
+          done
+
+      - name: Build and smoke-test images
+        run: ./smoke-test.sh

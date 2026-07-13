@@ -1,0 +1,7 @@
+ignored:
+  # Base image digests make distro package versions reproducible. Pinning individual
+  # apt/apk package versions would couple this stack to a specific repository snapshot.
+  - DL3008
+  - DL3018
+  # Kept as separate layers to make operational configuration easier to audit.
+  - DL3059
