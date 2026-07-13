@@ -1,7 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-if [ -z "${MARIADB_ROOT_PASSWORD:-}" ]; then
+MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD:-}
+if [ -z "$MARIADB_ROOT_PASSWORD" ] && [ -r "${MARIADB_ROOT_PASSWORD_FILE:-}" ]; then
+    MARIADB_ROOT_PASSWORD=$(cat "$MARIADB_ROOT_PASSWORD_FILE")
+fi
+
+if [ -z "$MARIADB_ROOT_PASSWORD" ]; then
     echo "Missing MARIADB_ROOT_PASSWORD." >&2
     exit 1
 fi

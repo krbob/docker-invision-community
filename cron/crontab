@@ -4,4 +4,4 @@
 5 4 * * 0 run-with-logging.sh "apache" "docker exec apache apachectl -k graceful"
 0 5 * * * run-with-logging.sh "backup" "docker exec mariadb create-backup.sh && docker exec apache create-backup.sh && docker exec restic publish-backups.sh"
 0 6 * * 0 run-with-logging.sh "restic" "docker exec restic prune-backups.sh"
-30 6 1 * * run-with-logging.sh "restic" "docker exec restic restic check"
+30 6 1 * * run-with-logging.sh "restic" "docker exec restic restic check --retry-lock 5m --read-data-subset=5%"

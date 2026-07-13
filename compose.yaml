@@ -68,16 +68,19 @@ services:
       - database:/var/lib/mysql
       - ${LOGS_DIRECTORY}/mariadb:/var/log/mysql
       - ${BACKUP_DIRECTORY}/db:/var/backup
+    secrets:
+      - mariadb_root_password
+      - mariadb_password
     environment:
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/mariadb_root_password
       MARIADB_DATABASE: ${MARIADB_DATABASE}
       MARIADB_USER: ${MARIADB_USER}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_PASSWORD_FILE: /run/secrets/mariadb_password
       TZ: ${TIMEZONE}
     networks:
       - backend
     healthcheck:
-      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MARIADB_ROOT_PASSWORD\" mariadb-admin ping -uroot --silent"]
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$(cat /run/secrets/mariadb_root_password)\" mariadb-admin ping -uroot --silent"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -179,11 +182,13 @@ services:
       context: restic
     volumes:
       - ${BACKUP_DIRECTORY}:/var/backup
+    secrets:
+      - restic_password
+      - aws_credentials
     environment:
       RESTIC_REPOSITORY: ${RESTIC_REPOSITORY}
-      RESTIC_PASSWORD: ${RESTIC_PASSWORD}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      RESTIC_PASSWORD_FILE: /run/secrets/restic_password
+      AWS_CREDENTIALS_FILE: /run/secrets/aws_credentials
       AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
       TZ: ${TIMEZONE}
     networks:
@@ -194,6 +199,16 @@ services:
 volumes:
   database:
   certificates:
+
+secrets:
+  mariadb_root_password:
+    file: ${SECRETS_DIRECTORY}/mariadb_root_password
+  mariadb_password:
+    file: ${SECRETS_DIRECTORY}/mariadb_password
+  restic_password:
+    file: ${SECRETS_DIRECTORY}/restic_password
+  aws_credentials:
+    file: ${SECRETS_DIRECTORY}/aws_credentials
 
 networks:
   web:
