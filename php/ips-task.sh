@@ -29,7 +29,7 @@ if [ -z "$DB_HOST" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS
     exit 1
 fi
 
-TASK_KEY=$(DB_HOST="$DB_HOST" DB_USER="$DB_USER" DB_PASS="$DB_PASS" DB_NAME="$DB_NAME" DB_PORT="$DB_PORT" SQL_QUERY="$SQL_QUERY" php -r "
+if ! TASK_KEY=$(DB_HOST="$DB_HOST" DB_USER="$DB_USER" DB_PASS="$DB_PASS" DB_NAME="$DB_NAME" DB_PORT="$DB_PORT" SQL_QUERY="$SQL_QUERY" php -r "
 try {
     \$port = getenv('DB_PORT') ?: 3306;
     \$mysqli = new mysqli(getenv('DB_HOST'), getenv('DB_USER'), getenv('DB_PASS'), getenv('DB_NAME'), (int) \$port);
@@ -51,6 +51,10 @@ try {
     exit(1);
 }
 " 2>&1)
+then
+    echo "$TASK_KEY" >&2
+    exit 1
+fi
 
 if [[ "$TASK_KEY" == ERROR:* ]]; then
     echo "${TASK_KEY#ERROR: }" >&2
