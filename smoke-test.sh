@@ -17,6 +17,7 @@ fi
 
 PROJECT_NAME=${SMOKE_PROJECT_NAME:-invision-smoke}
 ENV_ARGS=()
+CRON_LOG_DIRECTORY=
 
 if [ -f .env ]; then
     ENV_ARGS=(--env-file .env)
@@ -66,6 +67,9 @@ run_image_entrypoint() {
 
 cleanup() {
     compose down --remove-orphans -v >/dev/null 2>&1 || true
+    if [ -n "$CRON_LOG_DIRECTORY" ]; then
+        rm -rf "$CRON_LOG_DIRECTORY"
+    fi
 }
 trap cleanup EXIT
 
@@ -88,7 +92,14 @@ run_image php php -r '$required=["gd","imagick","zip","exif","gmp","mysqli","red
 
 run_image mariadb mariadbd --version
 run_image redis redis-server --version
-run_image cron sh -c 'command -v docker >/dev/null && command -v crond >/dev/null'
+run_image cron sh -c 'command -v docker >/dev/null && command -v crond >/dev/null && command -v flock >/dev/null'
+
+echo "Smoke: cron logging"
+CRON_LOG_DIRECTORY=$(mktemp -d)
+docker run --rm \
+    -v "$CRON_LOG_DIRECTORY:/var/log" \
+    "$(image_id cron)" \
+    sh -c 'run-with-logging.sh failed false; status=$?; test "$status" -eq 1 && grep -Eq "\\[failed\\] exit=1$" /var/log/cron.log'
 run_image logrotate logrotate --version
 run_image_entrypoint certbot certbot --version
 run_image_entrypoint certbot sh -c 'mkdir -p /var/www/certbot && certbot renew --webroot -w /var/www/certbot --dry-run --non-interactive --config-dir /tmp/letsencrypt --work-dir /tmp/work --logs-dir /tmp/logs'
