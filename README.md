@@ -29,8 +29,8 @@ When upgrading an existing deployment that still keeps those four values in
 ./migrate-secrets.sh
 ```
 
-It refuses to overwrite an existing secret file. After confirming the upgraded
-stack works, remove `MARIADB_ROOT_PASSWORD`, `MARIADB_PASSWORD`,
+It adds `SECRETS_DIRECTORY` when it is absent and refuses to overwrite an
+existing secret file. After confirming the upgraded stack works, remove `MARIADB_ROOT_PASSWORD`, `MARIADB_PASSWORD`,
 `RESTIC_PASSWORD`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` from `.env`.
 
 Run the containers:
