@@ -122,6 +122,7 @@ smoke_secret_migration() {
         'AWS_SECRET_ACCESS_KEY=smoke-secret-access-key' > "$MIGRATION_DIRECTORY/.env"
 
     ./migrate-secrets.sh "$MIGRATION_DIRECTORY/.env" "$MIGRATION_DIRECTORY/secrets" >/dev/null
+    rg -qFx "SECRETS_DIRECTORY=$MIGRATION_DIRECTORY/secrets" "$MIGRATION_DIRECTORY/.env"
     test "$(file_mode "$MIGRATION_DIRECTORY/secrets")" = 700
     test "$(file_mode "$MIGRATION_DIRECTORY/secrets/mariadb_root_password")" = 600
     test "$(<"$MIGRATION_DIRECTORY/secrets/mariadb_root_password")" = smoke-root-password

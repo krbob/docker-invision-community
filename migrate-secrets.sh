@@ -62,5 +62,13 @@ chmod 700 "$secrets_directory"
   printf 'AWS_SECRET_ACCESS_KEY=%s\n' "$aws_secret_access_key"
 } > "$secrets_directory/aws_credentials")
 
+if ! grep -Eq '^[[:space:]]*SECRETS_DIRECTORY=' "$env_file"; then
+  compose_secrets_directory=$secrets_directory
+  if [[ $compose_secrets_directory != /* && $compose_secrets_directory != ./* ]]; then
+    compose_secrets_directory="./$compose_secrets_directory"
+  fi
+  printf '\nSECRETS_DIRECTORY=%s\n' "$compose_secrets_directory" >> "$env_file"
+fi
+
 printf 'Migrated secrets to %s. Remove plaintext secret entries from %s after verifying the deployment.\n' \
   "$secrets_directory" "$env_file"
