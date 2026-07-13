@@ -38,7 +38,9 @@ echo "vm.overcommit_memory = 1" | sudo tee /etc/sysctl.d/memory-overcommit.conf
 - HTTP/2 and HSTS are enabled.
 - Requests without a domain are forbidden.
 - `acme-challenge` support is added.
-- `RemoteIPHeader` support for Cloudflare is included.
+- Cloudflare client-IP support is opt-in. Set `TRUSTED_PROXY_CIDRS` to the current,
+  comma-separated Cloudflare CIDR ranges only when the origin accepts traffic exclusively
+  from Cloudflare. When unset, `CF-Connecting-IP` is ignored.
 - Scripts `create-backup.sh` and `restore-backup.sh` create and restore backups of www files, respectively.
 
 ### Certbot
@@ -46,6 +48,9 @@ echo "vm.overcommit_memory = 1" | sudo tee /etc/sysctl.d/memory-overcommit.conf
 
 ### Cron
 Talks to Docker through the `socket-proxy` container, which exposes only the API endpoints needed to run commands in other containers, instead of mounting the Docker socket directly.
+
+The socket proxy is isolated with Cron on a dedicated internal network. Do not attach
+application containers to this network.
 
 Periodically runs:
 - IPS Task

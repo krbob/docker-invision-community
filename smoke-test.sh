@@ -73,6 +73,15 @@ compose config --quiet
 compose build --pull
 
 run_image apache httpd -t
+run_image apache sh -c 'test ! -s /usr/local/apache2/conf/extra/trusted-proxies.conf'
+
+echo "Smoke: apache trusted proxy configuration"
+docker run --rm \
+    -e DOMAIN_NAME=example.com \
+    -e TRUSTED_PROXY_CIDRS="203.0.113.0/24,2001:db8::/32" \
+    -e TZ=UTC \
+    "$(image_id apache)" \
+    sh -c 'grep -Fx "RemoteIPHeader CF-Connecting-IP" /usr/local/apache2/conf/extra/trusted-proxies.conf && grep -Fx "RemoteIPTrustedProxy 203.0.113.0/24" /usr/local/apache2/conf/extra/trusted-proxies.conf && grep -Fx "RemoteIPTrustedProxy 2001:db8::/32" /usr/local/apache2/conf/extra/trusted-proxies.conf'
 
 # shellcheck disable=SC2016
 run_image php php -r '$required=["gd","imagick","zip","exif","gmp","mysqli","redis"]; $missing=array_filter($required, fn($extension)=>!extension_loaded($extension)); if ($missing) { fwrite(STDERR, "Missing PHP extensions: ".implode(", ", $missing).PHP_EOL); exit(1); } echo "PHP ".PHP_VERSION.PHP_EOL;'

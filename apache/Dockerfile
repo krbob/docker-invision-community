@@ -8,11 +8,12 @@ ENV CERTIFICATES_DIRECTORY=/etc/letsencrypt
 
 COPY httpd-vhosts.conf ${HTTPD_PREFIX}/conf/extra/
 
-COPY generate-snakeoil-cert.sh create-backup.sh restore-backup.sh /usr/local/bin/
+COPY generate-snakeoil-cert.sh create-backup.sh restore-backup.sh ips-entrypoint.sh /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/generate-snakeoil-cert.sh \
     && chmod +x /usr/local/bin/create-backup.sh \
-    && chmod +x /usr/local/bin/restore-backup.sh
+    && chmod +x /usr/local/bin/restore-backup.sh \
+    && chmod +x /usr/local/bin/ips-entrypoint.sh
 
 RUN /usr/local/bin/generate-snakeoil-cert.sh
 
@@ -30,3 +31,5 @@ RUN sed -i \
 	${HTTPD_PREFIX}/conf/httpd.conf
 
 RUN sed -i '/<VirtualHost/,/<\/VirtualHost>/ s/^/#/' ${HTTPD_PREFIX}/conf/extra/httpd-ssl.conf
+
+ENTRYPOINT ["ips-entrypoint.sh"]
