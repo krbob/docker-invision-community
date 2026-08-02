@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   verify:
+    name: ci-required
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -30,7 +31,7 @@ jobs:
               -v "$PWD/.hadolint.yaml:/hadolint.yaml:ro" \
               --entrypoint /bin/hadolint \
               hadolint/hadolint:latest@sha256:27086352fd5e1907ea2b934eb1023f217c5ae087992eb59fde121dce9c9ff21e \
-              --config /hadolint.yaml - < "$dockerfile"
+              --failure-threshold error --config /hadolint.yaml - < "$dockerfile"
           done
 
       - name: Build and smoke-test images
